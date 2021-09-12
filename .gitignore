@@ -32,3 +32,4 @@ wheels/
 .vscode
 _darcs
 
+*.pth
