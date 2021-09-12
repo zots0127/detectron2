@@ -167,7 +167,7 @@ class SOLOv2(nn.Module):
             ins_ind_label_list.append(cur_ins_ind_label_list)
             grid_order_list.append(cur_grid_order_list)
         return ins_label_list, cate_label_list, ins_ind_label_list, grid_order_list
-        
+
     def get_ground_truth_single(self, img_idx, gt_instances, mask_feat_size):
         gt_bboxes_raw = gt_instances[img_idx].gt_boxes.tensor
         gt_labels_raw = gt_instances[img_idx].gt_classes
@@ -494,12 +494,12 @@ class SOLOv2(nn.Module):
         results.pred_masks = seg_masks
 
         # get bbox from mask
-        pred_boxes = torch.zeros(seg_masks.size(0), 4)
-        #for i in range(seg_masks.size(0)):
-        #    mask = seg_masks[i].squeeze()
-        #    ys, xs = torch.where(mask)
-        #    pred_boxes[i] = torch.tensor([xs.min(), ys.min(), xs.max(), ys.max()]).float()
-        results.pred_boxes = Boxes(pred_boxes)        
+        #pred_boxes = torch.zeros(seg_masks.size(0), 4)
+        for i in range(seg_masks.size(0)):
+            mask = seg_masks[i].squeeze()
+            ys, xs = torch.where(mask)
+            pred_boxes[i] = torch.tensor([xs.min(), ys.min(), xs.max(), ys.max()]).float()
+        results.pred_boxes = Boxes(pred_boxes)
 
         return results
 
