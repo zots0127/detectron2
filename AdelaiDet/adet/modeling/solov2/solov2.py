@@ -40,9 +40,9 @@ class SOLOv2(nn.Module):
         self.strides = cfg.MODEL.SOLOV2.FPN_INSTANCE_STRIDES
         self.sigma = cfg.MODEL.SOLOV2.SIGMA
         # Instance parameters.
-        self.num_classes = cfg.MODEL.SOLOV2.NUM_CLASSES
-        self.num_kernels = cfg.MODEL.SOLOV2.NUM_KERNELS
-        self.num_grids = cfg.MODEL.SOLOV2.NUM_GRIDS
+        self.num_classes = cfg.MODEL.SOLOV2.NUM_CLASSES #From Datasets
+        self.num_kernels = cfg.MODEL.SOLOV2.NUM_KERNELS #Dynamic_kernel_setting
+        self.num_grids = cfg.MODEL.SOLOV2.NUM_GRIDS #Grids_setting
 
         self.instance_in_features = cfg.MODEL.SOLOV2.INSTANCE_IN_FEATURES
         self.instance_strides = cfg.MODEL.SOLOV2.FPN_INSTANCE_STRIDES
@@ -117,6 +117,7 @@ class SOLOv2(nn.Module):
             gt_instances = None
 
         features = self.backbone(images.tensor)
+        #Images parsing throught FCN(Fully conv network)
 
         # ins branch
         ins_features = [features[f] for f in self.instance_in_features]
@@ -377,14 +378,14 @@ class SOLOv2(nn.Module):
             self, cate_preds, kernel_preds, seg_preds, cur_size, ori_size
     ):
         # overall info.
-        h, w = cur_size
+        h, w = cur_size#image size
         f_h, f_w = seg_preds.size()[-2:]
-        ratio = math.ceil(h/f_h)
-        upsampled_size_out = (int(f_h*ratio), int(f_w*ratio))
+        ratio = math.ceil(h/f_h)#Returns ceil(上整数)
+        upsampled_size_out = (int(f_h*ratio), int(f_w*ratio))#重新调整feature大小
 
         # process.
-        inds = (cate_preds > self.score_threshold)
-        cate_scores = cate_preds[inds]
+        inds = (cate_preds > self.score_threshold)#只选取大于限定分数的检测结果
+        cate_scores = cate_preds[inds]#导出所有超过分数的检测到的实例
         if len(cate_scores) == 0:
             results = Instances(ori_size)
             results.scores = torch.tensor([])
