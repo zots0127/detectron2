@@ -28,6 +28,8 @@ class SOLOv2(nn.Module):
     SOLOv2 model. Creates FPN backbone, instance branch for kernels and categories prediction,
     mask branch for unified mask features.
     Calculates and applies proper losses to class and masks.
+    创建特征金字塔网路骨干，实例分支用作卷积核与类别预测，
+    掩码分支用来做统一掩码特征。
     """
 
     def __init__(self, cfg):
@@ -67,18 +69,23 @@ class SOLOv2(nn.Module):
         self.nms_type = cfg.MODEL.SOLOV2.NMS_TYPE
 
         # build the backbone.
+        # 这里是用了Resnet作为骨干网络
         self.backbone = build_backbone(cfg)
         backbone_shape = self.backbone.output_shape()
 
         # build the ins head.
+        # 参照下面的ins head代码
         instance_shapes = [backbone_shape[f] for f in self.instance_in_features]
         self.ins_head = SOLOv2InsHead(cfg, instance_shapes)
 
         # build the mask head.
+        # 参照下面的mask head 代码
         mask_shapes = [backbone_shape[f] for f in self.mask_in_features]
         self.mask_head = SOLOv2MaskHead(cfg, mask_shapes)
 
         # loss
+        # Dice 是计算掩码loss 
+        # Focal是计算类别loss
         self.ins_loss_weight = cfg.MODEL.SOLOV2.LOSS.DICE_WEIGHT
         self.focal_loss_alpha = cfg.MODEL.SOLOV2.LOSS.FOCAL_ALPHA
         self.focal_loss_gamma = cfg.MODEL.SOLOV2.LOSS.FOCAL_GAMMA
@@ -121,8 +128,8 @@ class SOLOv2(nn.Module):
 
         # ins branch
         ins_features = [features[f] for f in self.instance_in_features]
-        ins_features = self.split_feats(ins_features)
-        cate_pred, kernel_pred = self.ins_head(ins_features)
+        ins_features = self.split_feats(ins_features)#输入从骨干网络获取的从高到低不同分辨率的特征输入
+        cate_pred, kernel_pred = self.ins_head(ins_features)#获取类别与用作分类的卷积核 可用在最后实例mask的计算
 
         # mask branch
         mask_features = [features[f] for f in self.mask_in_features]
@@ -270,7 +277,7 @@ class SOLOv2(nn.Module):
                          for kernel_preds_level_img, grid_orders_level_img in
                          zip(kernel_preds_level, grid_orders_level)]
                         for kernel_preds_level, grid_orders_level in zip(kernel_preds, zip(*grid_order_list))]
-        # generate masks
+        # generate masks 生成掩码
         ins_pred_list = []
         for b_kernel_pred in kernel_preds:
             b_mask_pred = []
@@ -345,6 +352,7 @@ class SOLOv2(nn.Module):
                 feats[2],
                 feats[3],
                 F.interpolate(feats[4], size=feats[3].shape[-2:], mode='bilinear'))
+    # 分离从骨干网络中取得的不同大小特征，并第一层直接下采样 最后一层是第四层上采样。一共输出五层。接下来输出到
 
 
     def inference(self, pred_cates, pred_kernels, pred_masks, cur_sizes, images):
