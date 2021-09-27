@@ -503,7 +503,7 @@ class SOLOv2(nn.Module):
         results.pred_masks = seg_masks
 
         # get bbox from mask
-        #pred_boxes = torch.zeros(seg_masks.size(0), 4)
+        pred_boxes = torch.zeros(seg_masks.size(0), 4)
         for i in range(seg_masks.size(0)):
             mask = seg_masks[i].squeeze()
             ys, xs = torch.where(mask)
